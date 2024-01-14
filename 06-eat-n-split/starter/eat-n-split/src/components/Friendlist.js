@@ -1,18 +1,26 @@
 import { Button } from "./Button";
 
-export function FriendList({ friends }) {
+export function FriendList({ friends, onSelectedFriend, selectedfriend }) {
   return (
     <ul>
-      {friends.map((friend) => (
-        <Friend friend={friend} key={friend.id} />
-      ))}
+      {friends.map((friend) => {
+        return (
+          <Friend
+            friend={friend}
+            key={friend.id}
+            onSelectedFriend={onSelectedFriend}
+            selectedfriend={selectedfriend}
+          />
+        );
+      })}
     </ul>
   );
 }
 
-function Friend({ friend }) {
+function Friend({ friend, onSelectedFriend, selectedfriend }) {
+  let isSelected = friend.id === selectedfriend?.id;
   return (
-    <li>
+    <li className={isSelected ? "selected" : ""}>
       <img src={friend.image} alt={friend.name} />
       <h3>{friend.name}</h3>
       {friend.balance < 0 && (
@@ -22,15 +30,17 @@ function Friend({ friend }) {
       )}
       {friend.balance > 0 && (
         <p className="green">
-          you owe {friend.name} ${Math.abs(friend.balance)}
+          {friend.name} owes you ${Math.abs(friend.balance)}
         </p>
       )}
       {friend.balance === 0 && (
         <p>
-          you owe {friend.name} ${Math.abs(friend.balance)}
+          you and {friend.name} are even ${Math.abs(friend.balance)}
         </p>
       )}
-      <Button>select</Button>
+      <Button onClick={() => onSelectedFriend(friend)}>
+        {isSelected ? "close" : "select"}
+      </Button>
     </li>
   );
 }

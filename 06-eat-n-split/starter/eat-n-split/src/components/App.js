@@ -26,29 +26,66 @@ const initialFriends = [
 ];
 export default function App() {
   let [showAddFriend, setShowAddFriend] = useState(false);
-
   let [friendsList, setFriendList] = useState(initialFriends);
+  let [friendImageUrl, setFriendImageUrl] = useState(
+    "https://i.pravatar.cc/48?u=499476"
+  );
+  let [selectedfriend, setSelectedFriend] = useState(null);
 
   // show add friend form
-  function handleAddFriend() {
+  function handleAddFriendFormShow() {
     setShowAddFriend(!showAddFriend);
+    let randomNum = Math.trunc(Math.random() * 20 - 10);
+    setFriendImageUrl(`https://i.pravatar.cc/48?u=4994${randomNum}`);
   }
 
   function handleNewAddFriend(newFriend) {
     setFriendList((oldList) => [...oldList, newFriend]);
   }
+
+  function handleSelected(person) {
+    setSelectedFriend((currentfriend) =>
+      currentfriend?.id === person.id ? null : person
+    );
+    setShowAddFriend(false);
+  }
+
+  function handlesplitBill(value) {
+    setFriendList((friends) =>
+      friends.map((friend) =>
+        friend.id === selectedfriend.id
+          ? { ...friend, balance: friend.balance + value }
+          : friend
+      )
+    );
+  }
+
   return (
     <div className="app">
       <div className="sidebar">
-        <FriendList friends={friendsList} />
+        <FriendList
+          friends={friendsList}
+          onSelectedFriend={handleSelected}
+          selectedfriend={selectedfriend}
+        />
         {showAddFriend && (
-          <FormAddNewFriend onAddNewFriend={handleNewAddFriend} />
+          <FormAddNewFriend
+            onAddNewFriend={handleNewAddFriend}
+            closeForm={handleAddFriendFormShow}
+            friendImageUrl={friendImageUrl}
+          />
         )}
-        <Button onClick={handleAddFriend}>
+        <Button onClick={handleAddFriendFormShow}>
           {showAddFriend ? "close" : "Add Friend"}
         </Button>
       </div>
-      <FormSplitBill />
+      {selectedfriend && (
+        <FormSplitBill
+          friend={selectedfriend}
+          onSplitBill={handlesplitBill}
+          key={selectedfriend.id}
+        />
+      )}
     </div>
   );
 }
