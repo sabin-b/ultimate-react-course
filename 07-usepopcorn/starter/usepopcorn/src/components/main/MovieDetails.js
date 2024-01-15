@@ -7,9 +7,11 @@ export function MovieDetails({
   oncloseSelectedTab,
   apiKey,
   onAddWatchList,
+  moviesList,
 }) {
   let [loading, setLoading] = useState(false);
   let [moviedetail, setmoviedetail] = useState({});
+  let [userRating, setuserRating] = useState(null);
   let {
     Title: title,
     Poster: poster,
@@ -21,8 +23,15 @@ export function MovieDetails({
     Actors: actors,
     Year: year,
     Director: director,
-    Ratings: userRatings,
+    // Ratings: userRatings,
   } = moviedetail;
+
+  // ! ischeck in list
+  let isWatched = moviesList?.map((movie) => movie.imdbID).includes(selectedId);
+
+  let userRated =
+    moviesList?.find((movie) => movie?.imdbID === selectedId) ?? [];
+  // console.log(isWatched, userRated);
 
   //! handle watchedList
   function handleWatchedList() {
@@ -33,7 +42,8 @@ export function MovieDetails({
       Poster: poster,
       runtime: Number(runTime.split(" ").at(0)),
       imdbRating: Number(imdbrating),
-      userRating: Number(userRatings.at(0).Value.split("/").at(0)),
+      //   userRating: Number(userRatings.at(0).Value.split("/").at(0)),
+      userRating: userRating ?? 0,
     };
     // console.log(newMovie);
     onAddWatchList(newMovie);
@@ -55,6 +65,32 @@ export function MovieDetails({
     }
     handleSelectedId();
   }, [selectedId, apiKey]);
+
+  // todo: doucment title change
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `movie | ${title}`;
+
+      // todo: cleanup function
+      return () => (document.title = "TimePass");
+    },
+    [title]
+  );
+
+  // todo: key press event
+  useEffect(() => {
+    // close handler
+    const handleClose = (e) => {
+      if (e.code === "Escape") oncloseSelectedTab();
+      // console.log(e.code);
+      console.log("closed");
+    };
+
+    document.addEventListener("keydown", handleClose);
+
+    return () => document.removeEventListener("keydown", handleClose);
+  }, [oncloseSelectedTab]);
 
   return (
     <div className="details">
@@ -79,10 +115,22 @@ export function MovieDetails({
           </header>
           <section>
             <div className="rating">
-              <StarRating maxRating={10} size={24} />
-              <button className="btn-add" onClick={handleWatchedList}>
-                Add To List
-              </button>
+              {isWatched ? (
+                <p>You Rated the movie ⭐{userRated.userRating}/10</p>
+              ) : (
+                <>
+                  <StarRating
+                    maxRating={10}
+                    size={24}
+                    onSetRating={setuserRating}
+                  />
+                  {userRating > 0 && (
+                    <button className="btn-add" onClick={handleWatchedList}>
+                      + Add To List
+                    </button>
+                  )}
+                </>
+              )}
             </div>
             <p>
               <em>{plot}</em>

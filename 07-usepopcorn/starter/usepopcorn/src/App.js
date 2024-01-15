@@ -16,7 +16,7 @@ import { Loader } from "./components/reusable/Loader";
 const apiKey = "31f65a86";
 export default function App() {
   //! handle search query start
-  let [searchQuery, setSearchQuery] = useState("");
+  let [searchQuery, setSearchQuery] = useState("leo");
 
   function handleSearchQuery(query) {
     setSearchQuery(query);
@@ -50,8 +50,14 @@ export default function App() {
   // ! Watched box area start
   const [watched, setWatched] = useState([]);
 
+  // todo : adding new movies
   function handleWatchedMovies(movie) {
     setWatched((movies) => [...movies, movie]);
+  }
+
+  // todo : removing movies
+  function handleDeleteWatchedMovies(id) {
+    setWatched((movies) => movies.filter((movie) => movie.imdbID !== id));
   }
 
   // ! Watched box area end
@@ -59,12 +65,14 @@ export default function App() {
   // ! fetch requests
 
   useEffect(() => {
+    let controller = new AbortController();
     async function handlefetchData() {
       try {
         setLoading(true);
         setError("");
         let res = await fetch(
-          `http://www.omdbapi.com/?apikey=${apiKey}&s=${searchQuery}`
+          `http://www.omdbapi.com/?apikey=${apiKey}&s=${searchQuery}`,
+          { signal: controller.signal }
         );
         if (!res.ok)
           throw new Error("something went wrong fetching with movies");
@@ -74,10 +82,11 @@ export default function App() {
           throw new Error("Movie Not Found");
         }
         setMovies(data.Search);
+        setError("");
         //! after render we can read the value from movies,now get []
         // console.log(movies);
       } catch (err) {
-        setError(err.message);
+        if (err.name !== "AbortError") setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -89,7 +98,11 @@ export default function App() {
       return;
     }
 
+    handleCloseSelectedId();
     handlefetchData();
+
+    // * abort incomplete fetch requests
+    return () => controller.abort();
   }, [searchQuery]);
 
   return (
@@ -122,11 +135,15 @@ export default function App() {
               selectedId={selectedId}
               apiKey={apiKey}
               onAddWatchList={handleWatchedMovies}
+              moviesList={watched}
             />
           ) : (
             <>
               <WatchedSummary watched={watched} />
-              <WatchedMovieList watched={watched} />
+              <WatchedMovieList
+                watched={watched}
+                handleDeleteWatchedMovies={handleDeleteWatchedMovies}
+              />
             </>
           )}
         </Box>
@@ -143,3 +160,5 @@ function ErrorMessage({ message }) {
     </p>
   );
 }
+
+// 11.12
